@@ -1,0 +1,192 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// DATA STRUCTURE FOR THE MAP //
+typedef struct MapNode {
+	int xpos;
+	int ypos;
+	int * linkSet;
+	int seti;
+} MapNode;
+////////////////////////////////
+
+int main(int argc, char ** argv)
+{
+	// CHECK EXECUTE COMMAND //
+	if(argc != 2) {
+		printf("Wrong Command... It should be ./adjacent inputfile.txt");
+		return EXIT_FAILURE;
+	}
+	
+	// OPEN THE INPUT FILE //
+	FILE * inFile = fopen(argv[1], "r");
+	if (inFile == NULL) {
+		fprintf(stderr, "can't open the input file.  Quit.\n");
+		return EXIT_FAILURE;
+	}
+
+	// READ THE FIRST LINE OF THE INPUT FILE //
+	int i;
+	int ch;
+	char * temp = malloc(sizeof(char) * 10); //originally 1000
+	i = 0;
+	int numvert;
+	int numedge;
+	while ( (ch = fgetc(inFile)) != '\n' ) {
+		if( ch == ' ' ) {
+			temp[i] = '\0';
+			numvert = atof(temp);
+			i = 0;
+		}
+		else {
+			temp[i] = ch;
+			i++;
+		}
+	}
+	temp[i] = '\0';
+	numedge = atof(temp);
+	//printf("Number of vertices: %d\n", numvert);
+	//printf("Number of edges: %d\n", numedge);
+
+	// MALLOC map //
+	MapNode * map = malloc(sizeof(MapNode) * numvert);
+	for(i = 0; i < numvert; i++) {
+		map[i].linkSet = NULL; // INITIALIZE ALL linkSet TO NULL
+	}
+
+	// READ ALL VERTICES AND PUT THEM IN map //
+	int j = 0;
+	int tempindex;
+	int tempxpos;
+	int tempypos;
+	for(i = 0; i < numvert; i++) {
+		if( (ch = fgetc(inFile)) == ' ' ) {
+			while( (ch = fgetc(inFile)) == ' ' ) {
+				//skip spaces
+			}
+			temp[j] = ch;
+			j++;
+		}
+		else {
+			temp[j] = ch;
+			j++;
+		}
+		while( (ch = fgetc(inFile)) != ' ' ) {
+			temp[j] = ch;
+			j++;
+		}
+		temp[j] = '\0';
+		tempindex = atof(temp);
+		j = 0;
+		while( (ch = fgetc(inFile)) == ' ' ) {
+			// skip spaces
+		}
+		temp[j] = ch;
+		j++;
+		while( (ch = fgetc(inFile)) != ' ' ) {
+			temp[j] = ch;
+			j++;
+		}
+		temp[j] = '\0';
+		tempxpos = atof(temp);
+		j = 0;
+		while( (ch = fgetc(inFile)) == ' ' ) {
+			//skip space
+		}
+		temp[j] = ch;
+		j++;
+		while( (ch = fgetc(inFile)) != '\n' ) {
+			temp[j] = ch;
+			j++;
+		}
+		temp[j] = '\0';
+		tempypos = atof(temp);
+		j = 0;
+		map[tempindex].xpos = tempxpos;
+		map[tempindex].ypos = tempypos;
+		map[tempindex].seti = 0;
+	}
+
+	// READ ALL EDGES AND PUT AS AN ATTRIBUTE OF EACH NODE //
+	int first;
+	int second;
+	for(i = 0; i < numedge; i++) {
+		if( (ch = fgetc(inFile)) == ' ' ) {
+			while( (ch = fgetc(inFile)) == ' ' ) {
+				//skip spaces
+			}
+			temp[j] = ch;
+			j++;
+		}
+		else {
+			temp[j] = ch;
+			j++;
+		}
+		while( (ch = fgetc(inFile)) != ' ' ) {
+			temp[j] = ch;
+			j++;
+		}
+		temp[j] = '\0';
+		first = atof(temp);
+		j = 0;
+		while( (ch = fgetc(inFile)) != '\n' && (ch != EOF) ) {
+			temp[j] = ch;
+			j++;
+		}
+		temp[j] = '\0';
+		second = atof(temp);
+		j = 0;
+		if(map[first].linkSet == NULL) {
+			map[first].linkSet = malloc(sizeof(int) * 100); //originally 1000
+		}
+		if(map[second].linkSet == NULL) {
+			map[second].linkSet = malloc(sizeof(int) * 100); //originally 1000
+		}
+		map[first].linkSet[map[first].seti] = second;
+		map[second].linkSet[map[second].seti] = first;
+		map[first].seti++;
+		map[second].seti++;
+	}
+
+	// SORT linkSet //
+	int k;
+	for(i = 0; i < numvert; i++) {
+		if(map[i].linkSet != NULL) {
+			for(j = 0; j < (map[i].seti - 1); j++) {
+				for(k = 0; k < (map[i].seti - j - 1); k++) {
+					if(map[i].linkSet[k] > map[i].linkSet[k + 1]) {
+						int swap = map[i].linkSet[k];
+						map[i].linkSet[k] = map[i].linkSet[k + 1];
+						map[i].linkSet[k + 1] = swap;
+					}
+				}
+			}
+		}
+	}
+	
+	// PRINT OUT //
+	for(i = 0; i < numvert; i++) {
+		if(map[i].linkSet != NULL) {
+			printf("%d:", i);
+			for(j = 0; j < map[i].seti; j++) {
+				printf(" %d", map[i].linkSet[j]);
+			}
+			printf("\n");
+		}
+	}
+
+	// FREE ALLOCATED MEMORY //
+	for(i = 0; i < numvert; i++) {
+		if(map[i].linkSet != NULL) {
+			free(map[i].linkSet);
+		}
+	}
+	free(map);
+	free(temp);
+
+	// CLOSE THE INPUT FILE	//
+	fclose(inFile);
+
+	return EXIT_SUCCESS;
+}	

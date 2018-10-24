@@ -1,0 +1,73 @@
+CFLAGS = -std=c99 -g -Wall -Wshadow --pedantic -Wunreachable-code -Wvla -Werror
+COVFLAGS = -fprofile-arcs -ftest-coverage
+GCC = gcc $(CFLAGS) $(COVFLAGS)
+OBJS = huffmain.o huff.o
+VALG = valgrind --tool=memcheck --leak-check=full --show-reachable=yes
+
+# "make"" will create an executable called pa14
+all: $(OBJS)
+	$(GCC) $(OBJS) -o huff
+
+huffmain.o: huffmain.c huff.c huff.h
+	$(GCC) -c huffmain.c
+
+huff.o: huffmain.c huff.c huff.h
+	$(GCC) -c huff.c
+
+# unhuff command
+all2: unhuffmain.o unhuff.o
+	$(GCC) unhuffmain.o unhuff.o -o unhuff
+
+unhuffmain.o: unhuffmain.c unhuff.c unhuff.h
+	$(GCC) -c unhuffmain.c
+
+unhuff.o: unhuffmain.c unhuff.c unhuff.h
+	$(GCC) -c unhuff.c
+	
+test2: all2
+	./unhuff inputs/gophers.huff
+	./unhuff inputs/basic.huff
+	./unhuff inputs/para.huff
+	./unhuff inputs/prideandprejudice.huff
+	./unhuff inputs/woods.huff
+
+memory2: all2 test2
+	$(VALG) ./unhuff inputs/gophers.huff
+	$(VALG) ./unhuff inputs/basic.huff
+	$(VALG) ./unhuff inputs/para.huff
+	$(VALG) ./unhuff inputs/prideandprejudice.huff
+	$(VALG) ./unhuff inputs/woods.huff
+
+compare:
+	diff inputs/gophers.huff.unhuff inputs/gophers
+	diff inputs/basic.huff.unhuff inputs/basic
+	diff inputs/para.huff.unhuff inputs/para
+	diff inputs/prideandprejudice.huff.unhuff inputs/prideandprejudice
+	diff inputs/woods.huff.unhuff inputs/woods
+
+# "make test" will run huff
+test: all
+	./huff inputs/gophers
+	./huff inputs/basic
+	./huff inputs/para
+	./huff inputs/prideandprejudice
+	./huff inputs/woods
+
+# "make memory" calls valgrind to check memory errors
+memory: all test
+	$(VALG) ./huff inputs/gophers
+	$(VALG) ./huff inputs/basic
+	$(VALG) ./huff inputs/para
+	$(VALG) ./huff inputs/prideandprejudice
+	$(VALG) ./huff inputs/woods
+
+# "make clean" remove .o and all output files
+clean:
+	/bin/rm -f *.o
+	/bin/rm -f *.gcda *.gcno gmon.out *gcov
+	/bin/rm -f huff unhuff
+	/bin/rm -f inputs/gophers.huff inputs/gophers.huff.unhuff
+	/bin/rm -f inputs/basic.huff inputs/basic.huff.unhuff
+	/bin/rm -f inputs/para.huff inputs/para.huff.unhuff
+	/bin/rm -f inputs/prideandprejudice.huff inputs/prideandprejudice.huff.unhuff
+	/bin/rm -f inputs/woods.huff inputs/woods.huff.unhuff
